@@ -66,3 +66,20 @@ export async function createTenantStore(formData: FormData) {
     return { success: false, error: error.message }
   }
 }
+
+export async function deleteTenant(userId: string) {
+  try {
+    // 1. Al borrar el usuario de Auth con la Admin API, 
+    // el ON DELETE CASCADE que pusimos en SQL se encargará de 
+    // borrar automáticamente su perfil y sus tiendas.
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
+
+    if (error) throw error
+
+    revalidatePath('/admin')
+    return { success: true }
+  } catch (error: any) {
+    console.error("Error al eliminar tenant:", error)
+    return { success: false, error: error.message }
+  }
+}
