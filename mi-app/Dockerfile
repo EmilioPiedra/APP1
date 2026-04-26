@@ -6,7 +6,7 @@ WORKDIR /app
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 # Cambiamos esto para que busque dentro de la carpeta mi-app
-COPY mi-app/package.json mi-app/package-lock.json* ./ 
+COPY package.json package-lock.json* ./
 RUN npm install
 
 # 3️⃣ Build
