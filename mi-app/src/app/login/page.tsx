@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
+export const dynamic = 'force-dynamic'
 
 // Usamos el cliente SSR para que guarde el pase VIP en las Cookies automáticamente
 const supabase = createBrowserClient(
