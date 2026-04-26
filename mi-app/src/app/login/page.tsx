@@ -33,9 +33,36 @@ export default function AdminLogin() {
     if (authError) {
       setError('Credenciales incorrectas. Verifica tu acceso.')
       setLoading(false)
-    } else {
-      // Si el login es exitoso, lo enviamos directo a su panel
-      router.push('/admin')
+      return
+    }
+    if (data?.user) {
+      // 2. 🧠 MAGIA: Buscamos qué rol tiene este usuario en la tabla profiles
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .maybeSingle()
+
+      if (profileError) {
+        console.error("Error al obtener el perfil:", profileError)
+        // Por precaución, si falla la lectura del rol, lo mandamos al login de nuevo
+        await supabase.auth.signOut()
+        setError('Error de permisos. Contacta soporte.')
+        setLoading(false)
+        return
+      }
+      const userRole = profile?.role || 'sin_rol'
+      // 3. 🚦 El semáforo: redirigimos según su perfil
+      if (userRole === 'admin') {
+        router.push('/admin')
+      } else if (userRole === 'vendor') {
+        router.push('/vendor/dashboard')
+      } else {
+        // Si entra aquí, es que su perfil no existe en la tabla
+        setError('Tu usuario no tiene un rol asignado en el sistema.')
+        setLoading(false)
+        await supabase.auth.signOut() 
+      }
     }
   }
 

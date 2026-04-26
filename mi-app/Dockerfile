@@ -5,14 +5,14 @@ WORKDIR /app
 # 2️⃣ Instalar dependencias
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
-COPY package.json package-lock.json* ./
+# Cambiamos esto para que busque dentro de la carpeta mi-app
+COPY mi-app/package.json mi-app/package-lock.json* ./ 
 RUN npm install
 
 # 3️⃣ Build
 FROM base AS builder
 WORKDIR /app
 
-# 👇 Variables que vienen desde Cloud Build
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG SUPABASE_SERVICE_ROLE_KEY
@@ -22,7 +22,8 @@ ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+# Copiamos todo el contenido de mi-app a la carpeta de trabajo
+COPY mi-app/ . 
 
 RUN npm run build
 

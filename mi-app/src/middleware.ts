@@ -1,19 +1,16 @@
-// src/middleware.ts
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
-  // 1. Empezamos a armar la respuesta
   let supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
     },
   })
 
-  // 2. Le damos al Middleware la capacidad de leer las cookies de Supabase
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://build-placeholder.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'build-placeholder-key',
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
@@ -32,30 +29,52 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // 3. Revisamos si el visitante tiene una sesión activa
+  // Obtenemos al usuario
   const { data: { user } } = await supabase.auth.getUser()
+  const path = request.nextUrl.pathname
 
-  // 4. LA REGLA DE ORO (Las paredes)
-  // Si intentan entrar a cualquier ruta de /admin y no están logueados...
-  if (request.nextUrl.pathname.startsWith('/admin') && !user) {
-    // Patada de regreso al login
+  // 1. REGLA PARA USUARIOS NO LOGUEADOS
+  // Si no hay sesión e intenta entrar a áreas protegidas -> Al login
+  if (!user && (path.startsWith('/admin') || path.startsWith('/vendor'))) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // 5. (Bono de usabilidad) Si YA estás logueado y por error vas a /login...
-  if (request.nextUrl.pathname.startsWith('/login') && user) {
-    // Te metemos directo a tu panel para ahorrarte clics
-    return NextResponse.redirect(new URL('/admin', request.url))
+  // 2. REGLA PARA USUARIOS LOGUEADOS (Evitar bucles y redirigir por rol)
+  if (user) {
+    // Consultamos el rol solo si es necesario (cuando está en login o en el área contraria)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const role = profile?.role
+
+    // Si ya está logueado e intenta ir al /login -> Redirigir a su panel correspondiente
+    if (path === '/login') {
+      if (role === 'admin') return NextResponse.redirect(new URL('/admin', request.url))
+      return NextResponse.redirect(new URL('/vendor/dashboard', request.url))
+    }
+
+    // Protección cruzada: Si es vendor e intenta entrar a /admin
+    if (path.startsWith('/admin') && role !== 'admin') {
+      return NextResponse.redirect(new URL('/vendor/dashboard', request.url))
+    }
+
+    // Protección cruzada: Si es admin e intenta entrar a /vendor
+    if (path.startsWith('/vendor') && role !== 'vendor') {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    }
   }
 
   return supabaseResponse
 }
 
-// 6. ¿Dónde patrulla el guardia? 
-// Le decimos que solo se active en /admin (y sus subcarpetas) y en /login
+// Actualizamos el matcher para incluir las rutas de vendor
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/vendor/:path*',
     '/login'
   ],
 }

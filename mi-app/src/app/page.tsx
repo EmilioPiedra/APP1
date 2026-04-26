@@ -42,11 +42,12 @@ export default function Home() {
             rel="noopener noreferrer"
           >
             <Image
-              className="dark:invert"
               src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              alt="Vercel Logo"
+              width={100}
+              height={24}
+              className="h-8 w-auto"
+              priority // <--- ¡SOLO AGREGA ESTA PALABRA!
             />
             Deploy Now
           </a>
