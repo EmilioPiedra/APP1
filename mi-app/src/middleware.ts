@@ -12,8 +12,8 @@ export async function middleware(request: NextRequest) {
 
   // 2. Le damos al Middleware la capacidad de leer las cookies de Supabase
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://build-placeholder.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'build-placeholder-key',
     {
       cookies: {
         getAll() {

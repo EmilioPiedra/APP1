@@ -100,7 +100,7 @@ export default function NewStoreForm() {
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 mb-2">Identificador (Slug)</label>
                   <div className="flex shadow-sm rounded-xl">
-                    <input type="text" name="slug" required pattern="[a-z0-9-]+" title="Solo letras minúsculas, números y guiones"
+                    <input type="text" name="slug" required pattern="[a-z0-9\-]+" title="Solo letras minúsculas, números y guiones"
                       className="w-full px-4 py-3 bg-zinc-50/50 border border-zinc-200 border-r-0 rounded-l-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all text-zinc-900 placeholder:text-zinc-400 z-10" 
                       placeholder="tecno-ventas" />
                     <span className="inline-flex items-center px-4 rounded-r-xl border border-l-0 border-zinc-200 bg-zinc-100/50 text-zinc-500 text-sm">

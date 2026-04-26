@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation'
 
 // Usamos el cliente SSR para que guarde el pase VIP en las Cookies automáticamente
 const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://build-placeholder.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'build-placeholder-key'
 )
 
 export default function AdminLogin() {
