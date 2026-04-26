@@ -20,10 +20,12 @@ export default function NewStoreForm() {
     const result = await createTenantStore(formData)
 
     if (result.success) {
-      setMessage({ text: result.message, type: 'success' })
+      // Agregamos ?? '' para asegurar que siempre sea un string
+      setMessage({ text: result.message ?? 'Tienda creada exitosamente', type: 'success' })
       form.reset() 
     } else {
-      setMessage({ text: result.error, type: 'error' })
+      // Agregamos ?? '' para asegurar que siempre sea un string
+      setMessage({ text: result.error ?? 'Error desconocido en el servidor', type: 'error' })
     }
     
     setLoading(false)
