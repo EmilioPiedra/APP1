@@ -4,14 +4,19 @@
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
-// Inicializamos el cliente de Supabase con permisos de administrador
-// ¡OJO! Usamos el SERVICE_ROLE_KEY, no el ANON_KEY
+// 1. Definimos el tipo de respuesta para que TypeScript no se queje en el frontend
+type ActionResponse = {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! 
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export async function createTenantStore(formData: FormData) {
+export async function createTenantStore(formData: FormData): Promise<ActionResponse> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const fullName = formData.get('fullName') as string
@@ -20,14 +25,15 @@ export async function createTenantStore(formData: FormData) {
 
   try {
     // 1. Crear el usuario en auth.users (Admin API)
-    // Esto crea el usuario SIN loguearlo en la sesión actual
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: password,
-      email_confirm: true, // Auto-confirmamos para que puedan entrar de una vez
+      email_confirm: true,
     })
 
-    if (authError) throw new Error(`Error en Auth: ${authError.message}`)
+    if (authError) {
+      return { success: false, error: authError.message }
+    }
     
     const userId = authData.user.id
 
@@ -39,9 +45,9 @@ export async function createTenantStore(formData: FormData) {
     })
 
     if (profileError) {
-      // Rollback manual: Si falla el perfil, borramos el usuario para no dejar basura
+      // Rollback: Borramos el usuario si falla la creación del perfil
       await supabaseAdmin.auth.admin.deleteUser(userId)
-      throw new Error(`Error en Perfil: ${profileError.message}`)
+      return { success: false, error: `Error en Perfil: ${profileError.message}` }
     }
 
     // 3. Crear la tienda (Tabla stores)
@@ -52,18 +58,25 @@ export async function createTenantStore(formData: FormData) {
     })
 
     if (storeError) {
-      // Rollback manual
+      // Rollback: Borramos el usuario si falla la creación de la tienda
       await supabaseAdmin.auth.admin.deleteUser(userId)
-      throw new Error(`Error en Tienda: ${storeError.message}`)
+      return { success: false, error: `Error en Tienda: ${storeError.message}` }
     }
 
-    // Si todo salió bien, refrescamos la página para ver la nueva tienda
-    revalidatePath('/admin/dashboard')
-    return { success: true, message: 'Tienda y usuario creados con éxito.' }
+    // Refrescamos la ruta del panel para que aparezca la nueva tienda
+    revalidatePath('/admin')
+    
+    return { 
+      success: true, 
+      message: 'Tienda y usuario creados con éxito.' 
+    }
 
   } catch (error: any) {
     console.error("Fallo al crear tenant:", error)
-    return { success: false, error: error.message }
+    return { 
+      success: false, 
+      error: error.message || 'Ocurrió un error inesperado en el servidor.' 
+    }
   }
 }
 
