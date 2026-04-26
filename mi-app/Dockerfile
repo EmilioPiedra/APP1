@@ -23,7 +23,7 @@ ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
 
 COPY --from=deps /app/node_modules ./node_modules
 # Copiamos todo el contenido de mi-app a la carpeta de trabajo
-COPY mi-app/ . 
+COPY . .
 
 RUN npm run build
 
